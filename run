@@ -1,28 +1,25 @@
 #!/usr/bin/env bash
-# ↑ Use the system's bash interpreter (ensures portability across systems)
 
-# ---------------------------------------------
-# STEP 1: Find the absolute directory path of this script
-# ---------------------------------------------
-# "${BASH_SOURCE[0]}" = the path of this script file (even if run via symlink)
-# dirname ...          = removes the filename, leaving only the directory path
-# cd ... && pwd        = change to that directory, then print its absolute path
-# &> /dev/null         = hide any cd errors/output from the terminal
-script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+# Determine directory where this script lives
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Print the directory path (for debugging)
-echo "$script_dir"
-
-# ---------------------------------------------
-# STEP 2: Capture the first argument passed to the script
-# ---------------------------------------------
-# "$1" = the first argument when you run this script, e.g.:
-#        ./run test     →  $1 = "test"
+# Optional filter keyword (first argument)
 filter="$1"
 
-# ---------------------------------------------
-# STEP 3: Display what we captured
-# ---------------------------------------------
-# Prints both the script directory and the argument in a readable format.
-# This helps confirm that everything is being parsed correctly.
-echo "Run: dir $script_dir -- filter \"$filter\""
+# Move into that directory (important if run from elsewhere)
+cd "$script_dir"
+
+# Collect all executable scripts inside runs/
+scripts=$(find runs -maxdepth 1 -mindepth 1 -executable -type f)
+
+# Loop through each script found
+for script in $scripts; do
+    # Skip scripts that don't match the filter
+    if echo "$script" | grep -qv "$filter"; then
+        echo "filtered: $filter -- $script"
+        continue
+    fi
+
+    # Run matching script
+    ./"$script"
+done
